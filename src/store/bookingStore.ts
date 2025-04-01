@@ -29,16 +29,10 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const from = (page - 1) * pageSize;
       const to = from + (pageSize - 1);
 
-      let query = supabase
+      // Get data with count
+      const { data, count, error } = await supabase
         .from('bookings')
-        .select('*', { count: 'exact' });
-
-      // Get total count
-      const { count, error: countError } = await query.count();
-      if (countError) throw countError;
-
-      // Get paginated data
-      const { data, error } = await query
+        .select('*', { count: 'exact', head: false })
         .range(from, to)
         .order('created_at', { ascending: false });
 
@@ -49,7 +43,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       }
 
       set({
-        bookings: data || [],
+        bookings: data,
         currentPage: page,
         totalPages: Math.ceil((count || 0) / pageSize),
         loading: false
