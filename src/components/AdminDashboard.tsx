@@ -14,7 +14,7 @@ export function AdminDashboard() {
 
   useEffect(() => {
     fetchBookings(1);
-  }, []);
+  }, [fetchBookings]);
 
   const handleDriverAssignment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

@@ -25,24 +25,37 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   fetchBookings: async (page: number) => {
     try {
       set({ loading: true, error: null });
-      const from = (page - 1) * 10;
-      const to = from + 9;
+      const pageSize = 10;
+      const from = (page - 1) * pageSize;
+      const to = from + (pageSize - 1);
 
-      const { data, error, count } = await supabase
+      let query = supabase
         .from('bookings')
-        .select('*', { count: 'exact' })
+        .select('*', { count: 'exact' });
+
+      // Get total count
+      const { count, error: countError } = await query.count();
+      if (countError) throw countError;
+
+      // Get paginated data
+      const { data, error } = await query
         .range(from, to)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
+      if (!data) {
+        throw new Error('No data received from the database');
+      }
+
       set({
-        bookings: data,
+        bookings: data || [],
         currentPage: page,
-        totalPages: Math.ceil((count || 0) / 10),
+        totalPages: Math.ceil((count || 0) / pageSize),
         loading: false
       });
     } catch (error) {
+      console.error('Error fetching bookings:', error);
       set({ error: (error as Error).message, loading: false });
     }
   },
